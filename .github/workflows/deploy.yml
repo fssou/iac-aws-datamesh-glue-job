@@ -55,19 +55,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.GH_REPO_NAME }}-${{ github.sha }}
-      - name: Setup Maven
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: corretto
-          cache: maven
-      - name: Publish to GitHub Packages
-        run: > 
-          mvn --quiet -B deploy --file ${{ github.workspace }}/pom.xml
-          -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
-          -DupdateReleaseInfo=true -DreleaseVersion=${{ github.sha }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: AWS Configure Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
