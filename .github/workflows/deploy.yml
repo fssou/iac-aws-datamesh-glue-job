@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '11'
-          distribution: 'amazon-corretto'
+          distribution: corretto
       - name: Build with Maven
         working-directory: app
         run: mvn -B package --file pom.xml
