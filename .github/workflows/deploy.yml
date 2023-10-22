@@ -38,7 +38,7 @@ jobs:
           distribution: corretto
       - name: Build with Maven
         working-directory: app
-        run: mvn -B package --file pom.xml
+        run: mvn --quiet -B package --file pom.xml
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
