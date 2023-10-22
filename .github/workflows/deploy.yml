@@ -1,0 +1,121 @@
+
+name: Terraform Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "*.md"
+
+env:
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  TF_STATE_BUCKET_NAME: ${{ secrets.TF_STATE_BUCKET_NAME }}
+  S3_BUCKET_PATH_GLUE_ASSETS: s3://${{ secrets.S3_BUCKET_NAME_GLUE_ASSETS }}/${{ github.repository }}
+  S3_BUCKET_PATH_DATAMESH_RAW_DATA: s3://${{ secrets.S3_BUCKET_NAME_DATAMESH_RAW_DATA }}
+  S3_BUCKET_PATH_DATAMESH_SOR_DATA: s3://${{ secrets.S3_BUCKET_NAME_DATAMESH_SOR_DATA }}
+  AWS_ROLE_SESSION_NAME: GitHubActions
+  AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github/repo-${{ github.repository_id }}
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+  deployments: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Maven
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'amazon-corretto'
+      - name: Build with Maven
+        working-directory: app
+        run: mvn -B package --file pom.xml
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.repository }}-${{ github.sha }}
+          path: ${{ github.workspace }}/app
+  publish:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.repository }}-${{ github.sha }}
+      - name: Setup Maven
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'amazon-corretto'
+      - name: Publish to GitHub Packages
+        run: mvn -B deploy --file ${{ github.workspace }}/pom.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: AWS Configure Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: ${{ env.AWS_ROLE_SESSION_NAME }}
+          role-duration-seconds: 900
+          output-credentials: true
+          mask-aws-account-id: true
+      - name: AWS S3 Sync
+        run: aws s3 sync ${{ github.workspace }} ${{ env.S3_BUCKET_PATH_GLUE_ASSETS }} --delete
+  deployment:
+    name: Deployment
+    runs-on: ubuntu-latest
+    needs: publish
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: AWS Configure Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: ${{ env.AWS_ROLE_SESSION_NAME }}
+          role-duration-seconds: 900
+          output-credentials: true
+          mask-aws-account-id: true
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+      - name: Terraform Configure
+        working-directory: infra
+        run: |
+          echo 'gh_repo_id="${{ github.repository_id }}"' >> generated.auto.tfvars
+          echo 'gh_repo_name="${{ github.repository }}"' >> generated.auto.tfvars
+          echo 's3_bucket_path_glue_assets="${{ env.S3_BUCKET_PATH_GLUE_ASSETS }}"' >> generated.auto.tfvars
+          echo 's3_bucket_path_datamesh_raw_data="${{ env.S3_BUCKET_PATH_DATAMESH_RAW_DATA }}"' >> generated.auto.tfvars
+          echo 's3_bucket_path_datamesh_sor_data="${{ env.S3_BUCKET_PATH_DATAMESH_SOR_DATA }}"' >> generated.auto.tfvars
+      - name: Terraform Initialize
+        working-directory: infra
+        run: > 
+          terraform init
+          -backend-config="bucket=${{ env.TF_STATE_BUCKET_NAME }}"
+          -backend-config="key=terraform/state/${{ github.repository_id }}"
+          -backend-config="region=${{ env.AWS_REGION }}"
+      - name: Terraform Validate
+        working-directory: infra
+        run: terraform validate
+      - name: Terraform Plan
+        working-directory: infra
+        run: terraform plan -out=${{ github.sha }}.tfplan
+      - name: Terraform Apply
+        working-directory: infra
+        run: terraform apply -auto-approve ${{ github.sha }}.tfplan

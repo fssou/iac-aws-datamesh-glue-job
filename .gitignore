@@ -1,0 +1,23 @@
+# Generated files
+generated.auto.tfvars
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.hcl
+
+# VSCode
+.vscode/
+.metals/
+.bloop/
+
+# IntelliJ
+.idea/
+
+# Logs
+*.log
+
+# Maven
+target/
