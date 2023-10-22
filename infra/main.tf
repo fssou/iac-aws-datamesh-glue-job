@@ -11,15 +11,16 @@ resource "aws_glue_job" "main" {
   name                   = var.gh_repo_name
   description            = "Glue job for ${var.gh_repo_name}"
   role_arn               = aws_iam_role.glue_job.arn
-  glue_version           = "3.0"
+  glue_version           = "4.0"
   max_retries            = 0
   worker_type            = "G.025X"
-  execution_class        = upper("standard")
+  execution_class        = upper("flex")
   security_configuration = aws_glue_security_configuration.main.name
   connections = [
     aws_glue_connection.main.name
   ]
   command {
+    name = "gluestreaming"
     script_location = "${var.s3_bucket_path_glue_assets}/src/main/scala/in/francl/data/datamesh/glue/GlueApp.scala"
   }
   default_arguments = {
