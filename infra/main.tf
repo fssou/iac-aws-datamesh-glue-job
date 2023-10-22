@@ -14,7 +14,7 @@ resource "aws_glue_job" "main" {
   glue_version           = "4.0"
   max_retries            = 0
   worker_type            = "G.025X"
-  execution_class        = upper("flex")
+  execution_class        = upper("standard")
   security_configuration = aws_glue_security_configuration.main.name
   connections = [
     aws_glue_connection.main.name
