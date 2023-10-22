@@ -11,10 +11,10 @@ resource "aws_glue_job" "main" {
   name                   = var.gh_repo_name
   description            = "Glue job for ${var.gh_repo_name}"
   role_arn               = aws_iam_role.glue_job.arn
-  glue_version           = 3.0
+  glue_version           = "3.0"
   max_retries            = 0
   worker_type            = "G.025X"
-  execution_class        = "flex"
+  execution_class        = upper("flex")
   security_configuration = aws_glue_security_configuration.main.name
   connections = [
     aws_glue_connection.main.name
@@ -43,7 +43,7 @@ resource "aws_glue_connection" "main" {
   ]
   name            = var.gh_repo_name
   description     = "Glue connection for ${var.gh_repo_name}"
-  connection_type = upper("NETWORK")
+  connection_type = upper("network")
   physical_connection_requirements {
     availability_zone = var.availability_zone
     security_group_id_list = [
