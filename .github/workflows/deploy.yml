@@ -62,7 +62,9 @@ jobs:
           distribution: corretto
           cache: maven
       - name: Publish to GitHub Packages
-        run: mvn -B deploy --file ${{ github.workspace }}/pom.xml
+        run: > 
+          mvn --quiet -B deploy --file ${{ github.workspace }}/pom.xml
+          -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: AWS Configure Credentials
@@ -100,10 +102,10 @@ jobs:
           terraform_wrapper: false
       - name: Terraform Configure
         working-directory: infra
-        run: |
-          echo 'gh_repo_id="${{ github.repository_id }}"' >> generated.auto.tfvars
-          echo 'gh_repo_name="${{ env.GH_REPO_NAME }}"' >> generated.auto.tfvars
-          echo 's3_bucket_path_glue_assets="${{ env.S3_BUCKET_PATH_GLUE_ASSETS }}"' >> generated.auto.tfvars
+        run: | 
+          echo 'gh_repo_id="${{ github.repository_id }}"'                                       >> generated.auto.tfvars
+          echo 'gh_repo_name="${{ env.GH_REPO_NAME }}"'                                         >> generated.auto.tfvars
+          echo 's3_bucket_path_glue_assets="${{ env.S3_BUCKET_PATH_GLUE_ASSETS }}"'             >> generated.auto.tfvars
           echo 's3_bucket_path_datamesh_raw_data="${{ env.S3_BUCKET_PATH_DATAMESH_RAW_DATA }}"' >> generated.auto.tfvars
           echo 's3_bucket_path_datamesh_sor_data="${{ env.S3_BUCKET_PATH_DATAMESH_SOR_DATA }}"' >> generated.auto.tfvars
       - name: Terraform Initialize
