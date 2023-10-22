@@ -1,6 +1,6 @@
 locals {
-    database_name = "db_data_world"
-    table_name    = "tb_covid_19_data_resource_hub_covid_19_case_counts"
+  database_name = "db_data_world"
+  table_name    = "tb_covid_19_data_resource_hub_covid_19_case_counts"
 }
 
 resource "aws_glue_job" "main" {
@@ -13,14 +13,15 @@ resource "aws_glue_job" "main" {
   role_arn               = aws_iam_role.glue_job.arn
   glue_version           = "4.0"
   max_retries            = 0
+  number_of_workers      = 2
   worker_type            = "G.025X"
   execution_class        = upper("standard")
   security_configuration = aws_glue_security_configuration.main.name
-  connections = [
+  connections            = [
     aws_glue_connection.main.name
   ]
   command {
-    name = "gluestreaming"
+    name            = "gluestreaming"
     script_location = "${var.s3_bucket_path_glue_assets}/src/main/scala/in/francl/data/datamesh/glue/GlueApp.scala"
   }
   default_arguments = {
@@ -46,7 +47,7 @@ resource "aws_glue_connection" "main" {
   description     = "Glue connection for ${var.gh_repo_name}"
   connection_type = upper("network")
   physical_connection_requirements {
-    availability_zone = var.availability_zone
+    availability_zone      = var.availability_zone
     security_group_id_list = [
       aws_security_group.main.id
     ]
@@ -62,7 +63,7 @@ resource "aws_glue_security_configuration" "main" {
     }
     s3_encryption {
       s3_encryption_mode = "SSE-KMS"
-      kms_key_arn = data.aws_kms_key.s3_default.arn
+      kms_key_arn        = data.aws_kms_key.s3_default.arn
     }
     job_bookmarks_encryption {
       job_bookmarks_encryption_mode = "DISABLED"
