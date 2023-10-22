@@ -15,8 +15,9 @@ env:
   S3_BUCKET_PATH_GLUE_ASSETS: s3://${{ secrets.S3_BUCKET_NAME_GLUE_ASSETS }}/${{ github.repository }}
   S3_BUCKET_PATH_DATAMESH_RAW_DATA: s3://${{ secrets.S3_BUCKET_NAME_DATAMESH_RAW_DATA }}
   S3_BUCKET_PATH_DATAMESH_SOR_DATA: s3://${{ secrets.S3_BUCKET_NAME_DATAMESH_SOR_DATA }}
-  AWS_ROLE_SESSION_NAME: GitHubActions
   AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github/repo-${{ github.repository_id }}
+  AWS_ROLE_SESSION_NAME: GitHubActions
+  GH_REPO_NAME: iac-aws-datamesh-glue-job
 
 permissions:
   id-token: write
@@ -42,7 +43,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.repository }}-${{ github.sha }}
+          name: ${{ env.GH_REPO_NAME }}-${{ github.sha }}
           path: ${{ github.workspace }}/app
   publish:
     name: Publish
@@ -52,7 +53,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ github.repository }}-${{ github.sha }}
+          name: ${{ env.GH_REPO_NAME }}-${{ github.sha }}
       - name: Setup Maven
         uses: actions/setup-java@v2
         with:
@@ -99,7 +100,7 @@ jobs:
         working-directory: infra
         run: |
           echo 'gh_repo_id="${{ github.repository_id }}"' >> generated.auto.tfvars
-          echo 'gh_repo_name="${{ github.repository }}"' >> generated.auto.tfvars
+          echo 'gh_repo_name="${{ env.GH_REPO_NAME }}"' >> generated.auto.tfvars
           echo 's3_bucket_path_glue_assets="${{ env.S3_BUCKET_PATH_GLUE_ASSETS }}"' >> generated.auto.tfvars
           echo 's3_bucket_path_datamesh_raw_data="${{ env.S3_BUCKET_PATH_DATAMESH_RAW_DATA }}"' >> generated.auto.tfvars
           echo 's3_bucket_path_datamesh_sor_data="${{ env.S3_BUCKET_PATH_DATAMESH_SOR_DATA }}"' >> generated.auto.tfvars
