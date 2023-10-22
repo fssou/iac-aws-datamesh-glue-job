@@ -47,11 +47,11 @@ resource "aws_glue_connection" "main" {
   description     = "Glue connection for ${var.gh_repo_name}"
   connection_type = upper("network")
   physical_connection_requirements {
-    availability_zone      = var.availability_zone
+    availability_zone      = data.aws_subnet.main.availability_zone
     security_group_id_list = [
-      aws_security_group.main.id
+      aws_security_group.main.id,
     ]
-    subnet_id = data.aws_subnet.main.cidr_block
+    subnet_id = data.aws_subnet.main.id
   }
 }
 
