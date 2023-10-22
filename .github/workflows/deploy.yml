@@ -37,6 +37,7 @@ jobs:
         with:
           java-version: '11'
           distribution: corretto
+          cache: maven
       - name: Build with Maven
         working-directory: app
         run: mvn --quiet -B package --file pom.xml
@@ -58,7 +59,8 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
-          distribution: 'amazon-corretto'
+          distribution: corretto
+          cache: maven
       - name: Publish to GitHub Packages
         run: mvn -B deploy --file ${{ github.workspace }}/pom.xml
         env:
