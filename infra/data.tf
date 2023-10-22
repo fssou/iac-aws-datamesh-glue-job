@@ -19,3 +19,6 @@ data "aws_subnet" "main" {
   availability_zone = var.availability_zone
 }
 
+data "aws_kms_key" "s3_default" {
+  key_id = "alias/aws/s3"
+}

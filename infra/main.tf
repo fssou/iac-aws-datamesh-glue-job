@@ -4,6 +4,10 @@ locals {
 }
 
 resource "aws_glue_job" "main" {
+  depends_on = [
+    aws_glue_connection.main,
+    aws_glue_security_configuration.main,
+  ]
   name                   = var.gh_repo_name
   description            = "Glue job for ${var.gh_repo_name}"
   role_arn               = aws_iam_role.glue_job.arn
@@ -34,6 +38,9 @@ resource "aws_glue_job" "main" {
 }
 
 resource "aws_glue_connection" "main" {
+  depends_on = [
+    aws_security_group.main,
+  ]
   name            = var.gh_repo_name
   description     = "Glue connection for ${var.gh_repo_name}"
   connection_type = upper("NETWORK")
@@ -50,13 +57,14 @@ resource "aws_glue_security_configuration" "main" {
   name = var.gh_repo_name
   encryption_configuration {
     cloudwatch_encryption {
-      cloudwatch_encryption_mode = "SSE-KMS"
+      cloudwatch_encryption_mode = "DISABLED"
     }
     s3_encryption {
       s3_encryption_mode = "SSE-KMS"
+      kms_key_arn = data.aws_kms_key.s3_default.arn
     }
     job_bookmarks_encryption {
-      job_bookmarks_encryption_mode = "CSE-KMS"
+      job_bookmarks_encryption_mode = "DISABLED"
     }
   }
 }
