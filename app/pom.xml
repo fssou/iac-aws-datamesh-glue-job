@@ -4,7 +4,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>in.francl.datamesh.glue</groupId>
+    <groupId>in.francl.data.datamesh.glue</groupId>
     <artifactId>glue-job-app</artifactId>
     <version>1.0.0</version>
 

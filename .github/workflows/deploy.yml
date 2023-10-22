@@ -65,6 +65,7 @@ jobs:
         run: > 
           mvn --quiet -B deploy --file ${{ github.workspace }}/pom.xml
           -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
+          -DupdateReleaseInfo=true -DreleaseVersion=${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: AWS Configure Credentials
